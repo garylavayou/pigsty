@@ -1,0 +1,5 @@
+# pigsty hostname
+10.10.10.10 pigsty-meta
+10.10.10.11 pigsty-node-01
+10.10.10.12 pigsty-node-02
+10.10.10.13 pigsty-node-03

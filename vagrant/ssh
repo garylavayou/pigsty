@@ -12,38 +12,20 @@
 # which allows you to ssh to VMs via both name and IP addr
 
 import os, re, sys, subprocess
-
-
-# get the node name and ip mapping from Vagrantfile
-def parse_vagrant_spec(vagrant_filepath):
-    specs = []
-    result = {}
-    with open(vagrant_filepath, 'r') as f:
-        raw_lines = f.readlines()
-
-    activate = False
-    for line in raw_lines:
-        if line.startswith('Specs'):
-            activate = True
-            continue
-        elif line.startswith(']'):
-            activate = False
-            break
-        if activate and '"name"' in line and '"ip"' in line:
-            name = re.findall('"name"\s*=>\s*"([^"]+)"', line)[0]
-            ip = re.findall('"ip"\s*=>\s*"([^"]+)"', line)[0]
-            result[name] = ip
-            specs.append((ip, name))
-    return result, specs
-
+from vagrant import get_vagrant_exec, get_user_home, parse_vagrant_spec
 
 # run vagrant ssh-config and gather result
 def get_vagrant_ssh_config(vagrant_dir):
-    print("cd %s && vagrant ssh-config" % vagrant_dir)
+    vagrant_exec=get_vagrant_exec()
+    print(f"cd {vagrant_dir} && {vagrant_exec} ssh-config")
     print("this may take several seconds....")
     os.chdir(vagrant_dir)
-    command = 'vagrant ssh-config'
+    command = '%s ssh-config' % vagrant_exec
     config = subprocess.check_output(command, shell=True, universal_newlines=True)
+    if sys.platform == 'linux' and vagrant_exec.endswith('.exe'):  # WSL
+        def drive_replace(match_obj: re.Match):
+            return f"/mnt/{match_obj.group(1).lower()}/"
+        config = re.sub('([A-Z]):/', drive_replace, config)
     return config
 
 
@@ -60,8 +42,8 @@ def generate_ssh_config(config, mapping):
 def write_ssh_config(config, name="pigsty"):
     config_name = '%s_config' % name
     include_cmd = 'Include ~/.ssh/%s_config' % name
-    main_config_path = os.path.join(os.environ['HOME'], '.ssh', 'config')
-    extra_config_path = os.path.join(os.environ['HOME'], '.ssh', config_name)
+    main_config_path = os.path.join(get_user_home(), '.ssh', 'config')
+    extra_config_path = os.path.join(get_user_home(), '.ssh', config_name)
 
     # write extra config
     print("write extra ssh config [%s] to %s" % (name, extra_config_path))
