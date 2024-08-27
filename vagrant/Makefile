@@ -19,17 +19,19 @@ new: del up ssh
 
 #------------------------------#
 # dns
+# Python 3.x is required.
+# Windows: sudo emulated by gsudo
 #------------------------------#
 dns:
-	sudo ./dns
+	sudo python ./dns
 
 #------------------------------#
 # add ssh config to ~/.ssh/
 #------------------------------#
 ssh:
-	./ssh
+	python ./ssh
 sshb:
-	./ssh build
+	python ./ssh build
 
 #------------------------------#
 # Start & Up
